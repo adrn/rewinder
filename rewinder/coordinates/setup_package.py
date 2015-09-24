@@ -10,7 +10,7 @@ def get_extensions():
     cfg['include_dirs'].append('numpy')
     cfg['sources'].append('rewinder/coordinates/gal_hel.pyx')
 
-    return [Extension('biff.coordinates._gal_hel', **cfg)]
+    return [Extension('rewinder.coordinates._gal_hel', **cfg)]
 
 # def get_package_data():
 #     return {'biff': ['src/*.h', 'data/*.dat.gz', 'data/*.coeff']}

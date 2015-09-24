@@ -11,7 +11,7 @@ def get_extensions():
     cfg['sources'].append('rewinder/likelihood.pyx')
     # cfg['libraries'] = ['gsl', 'gslcblas']
 
-    return [Extension('biff._likelihood', **cfg)]
+    return [Extension('rewinder._likelihood', **cfg)]
 
 # def get_package_data():
 #     return {'biff': ['src/*.h', 'data/*.dat.gz', 'data/*.coeff']}
