@@ -13,6 +13,8 @@ cimport numpy as np
 import cython
 cimport cython
 
+from libc.math cimport M_PI
+
 cdef extern from "math.h":
     double sqrt(double x)
     double atan2(double x, double x)
@@ -22,17 +24,19 @@ cdef extern from "math.h":
     double log(double x)
     double abs(double x)
 
+cdef TWOPI = 2*M_PI
+
 def gal_to_hel(np.ndarray[double, ndim=2] X,
                double Rsun=8.,
                double Vcirc=(220*0.0010227121650537077)): # km/s to kpc/Myr
     """ Assumes Galactic units: kpc, Myr, radian, M_sun """
 
+    cdef int ii
     cdef int nparticles = X.shape[0]
     cdef double[:,:] O = np.empty((nparticles, 6))
 
     cdef double x, y, z, vx, vy, vz, d_xy
     cdef double l,b,d,mul,mub,vr
-    cdef double twopi = np.pi*2
 
     for ii in range(nparticles):
         # transform to heliocentric cartesian
@@ -51,12 +55,12 @@ def gal_to_hel(np.ndarray[double, ndim=2] X,
         b = atan2(z, d_xy)
 
         if l < 0:
-            l = l+twopi
+            l = l+TWOPI
 
         # transform cartesian velocity to spherical
         vr = (vx*x + vy*y + vz*z) / d # kpc/Myr
-        mul = -(vx*y - x*vy) / d_xy**2 # rad / Myr
-        mub = -(z*(x*vx + y*vy) - d_xy**2*vz) / (d**2 * d_xy) # rad / Myr
+        mul = -(vx*y - x*vy) / (d_xy*d_xy) # rad / Myr
+        mub = -(z*(x*vx + y*vy) - d_xy*d_xy*vz) / (d*d * d_xy) # rad / Myr
 
         O[ii,0] = l
         O[ii,1] = b
@@ -72,6 +76,7 @@ def hel_to_gal(np.ndarray[double, ndim=2] O,
                double Vcirc=(220*0.0010227121650537077)): # km/s to kpc/Myr
     """ Assumes Galactic units: kpc, Myr, radian, M_sun """
 
+    cdef int ii
     cdef int nparticles = O.shape[0]
     cdef double[:,:] X = np.empty((nparticles, 6))
 
@@ -87,9 +92,9 @@ def hel_to_gal(np.ndarray[double, ndim=2] O,
         vr = O[ii,5]
 
         # transform from spherical to cartesian
-        x = d*np.cos(b)*np.cos(l)
-        y = d*np.cos(b)*np.sin(l)
-        z = d*np.sin(b)
+        x = d*cos(b)*cos(l)
+        y = d*cos(b)*sin(l)
+        z = d*sin(b)
 
         # transform spherical velocity to cartesian
         mul = -mul
