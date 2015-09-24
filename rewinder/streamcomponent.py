@@ -16,7 +16,7 @@ from gary.units import galactic
 from gary.inference import ModelParameter, NormalPrior
 
 # Project
-from .. import heliocentric_names
+# BROKEN: from .. import heliocentric_names
 
 __all__ = ['StreamComponent', 'RewinderPotential']
 

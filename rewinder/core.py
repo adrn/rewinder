@@ -23,8 +23,8 @@ from gary.inference import EmceeModel, ModelParameter
 from gary.inference.prior import *
 
 # Project
-from .. import heliocentric_names
-from ..coordinates import hel_to_gal
+# BROKEN from .. import heliocentric_names
+from .coordinates import hel_to_gal
 from .likelihood import rewinder_likelihood, compute_dE
 from .streamcomponent import StreamComponent, RewinderPotential
 
