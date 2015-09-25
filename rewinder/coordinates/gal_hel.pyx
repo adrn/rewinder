@@ -36,7 +36,7 @@ def gal_to_hel(np.ndarray[double, ndim=2] X,
     cdef double[:,:] O = np.empty((nparticles, 6))
 
     cdef double x, y, z, vx, vy, vz, d_xy
-    cdef double l,b,d,mul,mub,vr
+    cdef double l,b,d,mul_cosb,mub,vr
 
     for ii in range(nparticles):
         # transform to heliocentric cartesian
@@ -59,13 +59,13 @@ def gal_to_hel(np.ndarray[double, ndim=2] X,
 
         # transform cartesian velocity to spherical
         vr = (vx*x + vy*y + vz*z) / d # kpc/Myr
-        mul = -(vx*y - x*vy) / (d_xy*d_xy) # rad / Myr
+        mul_cosb = (x*vy-vx*y) / (d_xy*d) # rad / Myr
         mub = -(z*(x*vx + y*vy) - d_xy*d_xy*vz) / (d*d * d_xy) # rad / Myr
 
         O[ii,0] = l
         O[ii,1] = b
         O[ii,2] = d
-        O[ii,3] = mul
+        O[ii,3] = mul_cosb
         O[ii,4] = mub
         O[ii,5] = vr
 
@@ -80,29 +80,38 @@ def hel_to_gal(np.ndarray[double, ndim=2] O,
     cdef int nparticles = O.shape[0]
     cdef double[:,:] X = np.empty((nparticles, 6))
 
-    cdef double l,b,d,mul,mub,vr
-    cdef double x, y, z, vx, vy, vz, d_xy
+    cdef double l,b,d,mul_cosb,mub,vr
+    cdef double x, y, z, vx, vy, vz
+    cdef double cosl, sinl, cosb, sinb
 
     for ii in range(nparticles):
         l = O[ii,0]
         b = O[ii,1]
         d = O[ii,2]
-        mul = O[ii,3]
+        mul_cosb = O[ii,3]
         mub = O[ii,4]
         vr = O[ii,5]
 
+        cosb = cos(b)
+        sinb = sin(b)
+        cosl = cos(l)
+        sinl = sin(l)
+
         # transform from spherical to cartesian
-        x = d*cos(b)*cos(l)
-        y = d*cos(b)*sin(l)
-        z = d*sin(b)
+        x = d*cosl*cosb
+        y = d*sinl*cosb
+        z = d*sinb
 
         # transform spherical velocity to cartesian
-        mul = -mul
-        mub = -mub
+        # mul_cosb = -mul_cosb
+        # mub = -mub
 
-        vx = x/d*vr + y*mul + z*cos(l)*mub
-        vy = y/d*vr - x*mul + z*sin(l)*mub
-        vz = z/d*vr - d*cos(b)*mub
+        # vx = x/d*vr + y*mul + z*cos(l)*mub
+        # vy = y/d*vr - x*mul + z*sin(l)*mub
+        # vz = z/d*vr - d*cos(b)*mub
+        vx = vr*cosl*cosb - d*sinl*mul_cosb - d*cosl*sinb*mub
+        vy = vr*sinl*cosb + d*cosl*mul_cosb - d*sinl*sinb*mub
+        vz = vr*sinb + d*cosb*mub
 
         x = x - Rsun
         vy = vy + Vcirc
