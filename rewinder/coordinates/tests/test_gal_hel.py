@@ -18,6 +18,22 @@ from .. import gal_to_hel, hel_to_gal
 
 n = 100
 
+def test_roundtrip():
+    np.random.seed(42)
+
+    X = np.random.normal(size=(n,6))
+    O = gal_to_hel(X)
+    X_trans = hel_to_gal(O)
+    np.testing.assert_allclose(X, X_trans)
+
+    O = np.random.normal(size=(n,6))
+    O[:,0] = np.random.uniform(0, 2*np.pi, size=n)
+    O[:,1] = np.random.uniform(-np.pi/2, np.pi/2, size=n)
+    O[:,2] = np.random.uniform(0, 100, size=n)
+    X = hel_to_gal(O)
+    O_trans = gal_to_hel(X)
+    np.testing.assert_allclose(O, O_trans)
+
 def test_hel_gal():
     """
     Note: slight offsets between Astropy / gary transformation and

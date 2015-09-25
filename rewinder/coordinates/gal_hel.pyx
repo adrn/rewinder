@@ -48,10 +48,9 @@ def gal_to_hel(np.ndarray[double, ndim=2] X,
         vz = X[ii,5]
 
         # transform from cartesian to spherical
-        d = sqrt(x**2 + y**2 + z**2)
-        d_xy = sqrt(x**2 + y**2)
+        d = sqrt(x*x + y*y + z*z)
+        d_xy = sqrt(x*x + y*y)
         l = atan2(y, x)
-        # b = 1.5707963267948966 - acos(z/d)
         b = atan2(z, d_xy)
 
         if l < 0:
