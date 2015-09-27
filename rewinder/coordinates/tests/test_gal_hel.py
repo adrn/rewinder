@@ -16,7 +16,7 @@ from gary.units import galactic
 # Project
 from .. import gal_to_hel, hel_to_gal
 
-n = 100
+n = 128
 
 def test_roundtrip():
     np.random.seed(42)
@@ -43,6 +43,12 @@ def test_hel_gal():
     """
     np.random.seed(42)
 
+    RSUN = 8.*u.kpc
+    VCIRC = 240.*u.km/u.s
+    VLSR = [0,0,0.] * u.km/u.s
+    gc_frame = coord.Galactocentric(z_sun=0.*u.pc,
+                                    galcen_distance=RSUN)
+
     l = np.random.uniform(0.,360.,size=n)*u.degree
     b = np.random.uniform(-90.,90.,size=n)*u.degree
     d = np.random.uniform(0.,100.,size=n)*u.kpc
@@ -52,12 +58,6 @@ def test_hel_gal():
 
     mul_cosb = mul_cosb.to(u.mas/u.yr, equivalencies=u.dimensionless_angles())
     mub = mub.to(u.mas/u.yr, equivalencies=u.dimensionless_angles())
-
-    RSUN = 8.*u.kpc
-    VCIRC = 240.*u.km/u.s
-    VLSR = [0,0,0.] * u.km/u.s
-    gc_frame = coord.Galactocentric(z_sun=0.*u.pc,
-                                    galcen_distance=RSUN)
 
     c = coord.Galactic(l=l, b=b, distance=d)
     vxyz = gc.vhel_to_gal(c, (mul_cosb,mub), vr,
@@ -85,27 +85,47 @@ def test_hel_gal():
     assert np.allclose(vy1, vy, rtol=1E-2)
     assert np.allclose(vz1, vz, rtol=1E-2)
 
-# def test_gal_hel():
-#     np.random.seed(42)
+def test_gal_hel():
+    """
+    Note: slight offsets between Astropy / gary transformation and
+    this transformation are expected because this assumes (l,b)=(0,0)
+    is the Galactic center. Astropy uses a more modern measurement of
+    the position of the GC.
+    """
+    np.random.seed(42)
 
-#     xyz = np.random.uniform(-100.,100.,size=(3,n))*u.kpc
-#     vxyz = np.random.normal(0.,300.,size=(3,n))*u.km/u.s
+    RSUN = 8.*u.kpc
+    VCIRC = 240.*u.km/u.s
+    VLSR = [0,0,0.] * u.km/u.s
 
-#     lbd,(mul,mub,vr) = sc.gal_xyz_to_hel(xyz, vxyz, vlsr=[0.,0.,0.]*u.km/u.s)
-#     l = lbd.l.decompose(usys).value
-#     b = lbd.b.decompose(usys).value
-#     d = lbd.distance.decompose(usys).value
-#     mul = mul.decompose(usys).value
-#     mub = mub.decompose(usys).value
-#     vr = vr.decompose(usys).value
+    xyz = np.random.uniform(-10.,10.,size=(3,n))*u.kpc
+    vxyz = np.random.normal(0.,100.,size=(3,n))*u.km/u.s
 
-#     X = gal_to_hel(np.vstack((xyz.decompose(usys).value,
-#                               vxyz.decompose(usys).value)).T)
-#     l1,b1,d1,mul1,mub1,vr1 = X.T
+    c = coord.Galactocentric(coord.CartesianRepresentation(xyz),
+                             z_sun=0.*u.pc,
+                             galcen_distance=RSUN)
 
-#     assert np.allclose(l1, l)
-#     assert np.allclose(b1, b)
-#     assert np.allclose(d1, d)
-#     assert np.allclose(mul1, mul)
-#     assert np.allclose(mub1, mub)
-#     assert np.allclose(vr1, vr)
+    gal_c = c.transform_to(coord.Galactic)
+
+    mul_cosb,mub,vr = gc.vgal_to_hel(gal_c, vxyz, vcirc=VCIRC, vlsr=VLSR,
+                                     galactocentric_frame=c)
+
+    l = gal_c.l.decompose(galactic).value
+    b = gal_c.b.decompose(galactic).value
+    d = gal_c.distance.decompose(galactic).value
+    mul_cosb = mul_cosb.decompose(galactic).value
+    mub = mub.decompose(galactic).value
+    vr = vr.decompose(galactic).value
+
+    X = gal_to_hel(np.vstack((xyz.decompose(galactic).value,
+                              vxyz.decompose(galactic).value)).T,
+                   Vcirc=VCIRC.decompose(galactic).value,
+                   Rsun=RSUN.decompose(galactic).value)
+    l1,b1,d1,mul_cosb1,mub1,vr1 = X.T
+
+    assert np.allclose(l1, l, rtol=1E-2)
+    assert np.allclose(b1, b, rtol=1E-2)
+    assert np.allclose(d1, d, rtol=1E-2)
+    assert np.allclose(mul_cosb1, mul_cosb, rtol=1E-2)
+    assert np.allclose(mub1, mub, rtol=1E-2)
+    assert np.allclose(vr1, vr, rtol=1E-2)
