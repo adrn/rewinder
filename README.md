@@ -1,3 +1,5 @@
 Rewinder
 ========
-Measure the Galactic potential with stellar streams.
+
+Infer the Galactic potential with stellar streams.
+
